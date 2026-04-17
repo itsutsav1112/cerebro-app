@@ -1,12 +1,36 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { askGroq } from '../groq';
 
-const SYSTEM=`You are Cerebro — a sharp, warm CAT prep coach. You combine the wisdom of a career counsellor, sports psychologist, and CAT expert. Work on both exam skills and mental game naturally. Be direct, conversational, under 120 words unless solving. No bullet points in conversation.`;
+const GROQ_KEY = process.env.REACT_APP_GROQ_KEY;
+
+async function callGroq(messages) {
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${GROQ_KEY}`
+    },
+    body: JSON.stringify({
+      model: 'llama3-70b-8192',
+      messages,
+      max_tokens: 300,
+      temperature: 0.7
+    })
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  return data.choices?.[0]?.message?.content || '';
+}
+
+const SYSTEM = `You are Cerebro — a sharp, warm CAT prep coach. You combine the wisdom of a career counsellor, sports psychologist, and CAT expert. You work on exam skills and mental game naturally. Be direct, conversational, under 120 words unless solving a specific problem. No bullet points. Sound like a smart friend who knows CAT inside out.`;
 
 export default function Coach({user}) {
-  const [messages,setMessages]=useState([{role:'assistant',content:"Hey. I'm your Cerebro coach. Ask me anything — exam strategy, a concept you're stuck on, how to improve a section, or just how you're feeling about prep. What's on your mind?"}]);
+  const name = user?.name || '';
+  const [messages,setMessages]=useState([
+    {role:'assistant',content:`Hey${name?` ${name}`:''}. I'm your Cerebro coach. Ask me anything — exam strategy, a concept you're stuck on, how to improve a section, or just how you're feeling about prep. What's on your mind?`}
+  ]);
   const [input,setInput]=useState('');
   const [loading,setLoading]=useState(false);
+  const [error,setError]=useState('');
   const bottomRef=useRef(null);
 
   useEffect(()=>{bottomRef.current?.scrollIntoView({behavior:'smooth'});},[messages]);
@@ -15,14 +39,30 @@ export default function Coach({user}) {
     if(!input.trim()||loading)return;
     const text=input.trim();
     setInput('');
+    setError('');
     const newMessages=[...messages,{role:'user',content:text}];
     setMessages(newMessages);
     setLoading(true);
-    const history=newMessages.slice(1).map(m=>({role:m.role,content:m.content}));
-    const reply=await askGroq(SYSTEM,text,history.slice(0,-1));
-    setMessages([...newMessages,{role:'assistant',content:reply}]);
+    try{
+      const apiMessages=[
+        {role:'system',content:SYSTEM},
+        ...newMessages.map(m=>({role:m.role,content:m.content}))
+      ];
+      const reply=await callGroq(apiMessages);
+      setMessages([...newMessages,{role:'assistant',content:reply}]);
+    }catch(e){
+      setError('Connection issue. Check your internet and try again.');
+      setMessages(newMessages);
+    }
     setLoading(false);
   };
+
+  const quickReplies=[
+    "How do I eliminate options in VARC?",
+    "Best DILR strategy",
+    "I'm feeling anxious about CAT",
+    "How many questions should I attempt?"
+  ];
 
   return(
     <div style={{display:'flex',flexDirection:'column',height:'100vh',background:'var(--bg)'}}>
@@ -45,11 +85,28 @@ export default function Coach({user}) {
             </div>
           </div>
         )}
+        {error&&<div style={{fontSize:'12px',color:'#E24B4A',textAlign:'center',padding:'8px'}}>{error}</div>}
+        {messages.length===1&&(
+          <div style={{display:'flex',flexWrap:'wrap',gap:'8px',marginTop:'4px'}}>
+            {quickReplies.map((q,i)=>(
+              <div key={i} onClick={()=>{setInput(q);}} style={{fontSize:'12px',padding:'6px 12px',borderRadius:'100px',background:'var(--surface)',border:'0.5px solid var(--hint)',color:'var(--muted)',cursor:'pointer'}}>
+                {q}
+              </div>
+            ))}
+          </div>
+        )}
         <div ref={bottomRef}/>
       </div>
       <div style={{padding:'0.75rem 1.25rem 1rem',borderTop:'0.5px solid var(--surface3)',display:'flex',gap:'8px',alignItems:'flex-end',background:'var(--surface)'}}>
-        <textarea value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}} placeholder="Ask your coach anything..." rows={1} style={{flex:1,background:'var(--bg)',border:'0.5px solid var(--hint)',borderRadius:'12px',padding:'10px 14px',fontFamily:'var(--body)',fontSize:'13.5px',color:'var(--text)',resize:'none',outline:'none',lineHeight:'1.4',maxHeight:'100px'}}/>
-        <button onClick={send} style={{width:'40px',height:'40px',borderRadius:'12px',background:'var(--gold)',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+        <textarea
+          value={input}
+          onChange={e=>setInput(e.target.value)}
+          onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}}
+          placeholder="Ask your coach anything..."
+          rows={1}
+          style={{flex:1,background:'var(--bg)',border:'0.5px solid var(--hint)',borderRadius:'12px',padding:'10px 14px',fontFamily:'var(--body)',fontSize:'13.5px',color:'var(--text)',resize:'none',outline:'none',lineHeight:'1.4',maxHeight:'100px'}}
+        />
+        <button onClick={send} disabled={loading||!input.trim()} style={{width:'40px',height:'40px',borderRadius:'12px',background:loading||!input.trim()?'rgba(201,150,58,0.3)':'var(--gold)',border:'none',cursor:loading||!input.trim()?'default':'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
           <svg width="15" height="15" viewBox="0 0 20 20" fill="#0A0A0F"><path d="M2 10L18 2 12 18 10 11z"/></svg>
         </button>
       </div>
