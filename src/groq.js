@@ -35,7 +35,7 @@ Respond ONLY in valid JSON, no markdown:
 {"type":"question type","question":"full question text","sentences":[{"l":"A","t":"sentence text"}],"options":[{"l":"A","t":"option"},{"l":"B","t":"option"},{"l":"C","t":"option"},{"l":"D","t":"option"}],"correct":"A","feedback_correct":"one line — validate or push further","feedback_wrong":"one line — what went wrong and the right approach","shortcut":"CAT-specific tip or pattern to remember"}
 
 sentences array only for para jumbles, empty otherwise.
-Previously covered topics: ${previousTopics.join(', ')}`;
+Previously covered: ${previousTopics.join(', ')}`;
 
   return await askGroq(systemPrompt, `Generate a ${section} question at stage ${stage}.`);
 }

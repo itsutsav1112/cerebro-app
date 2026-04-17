@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Onboarding from './screens/Onboarding';
-import Home from './screens/Home';
 import Learn from './screens/Learn';
 import Coach from './screens/Coach';
 import Profile from './screens/Profile';
-import { supabase } from './supabase';
 
 export default function App() {
   const [screen, setScreen] = useState('loading');
@@ -28,35 +26,25 @@ export default function App() {
   };
 
   if (screen === 'loading') return (
-    <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh'}}>
-      <div style={{fontFamily:'var(--serif)',fontSize:'32px',fontWeight:'800',color:'var(--gold)'}}>C</div>
+    <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',background:'#0A0A0F'}}>
+      <div style={{fontFamily:'Syne,sans-serif',fontSize:'32px',fontWeight:'800',color:'#C9963A'}}>C</div>
     </div>
   );
 
   if (screen === 'onboarding') return <Onboarding onComplete={onOnboardingComplete} />;
 
   return (
-    <div style={{display:'flex',flexDirection:'column',minHeight:'100vh'}}>
+    <div style={{display:'flex',flexDirection:'column',minHeight:'100vh',background:'#0A0A0F'}}>
       <div style={{flex:1,overflowY:'auto'}}>
         {tab === 'learn' && <Learn user={user} />}
         {tab === 'coach' && <Coach user={user} />}
         {tab === 'profile' && <Profile user={user} />}
       </div>
-      <nav style={{
-        display:'flex',borderTop:'0.5px solid var(--surface3)',
-        background:'var(--surface)',padding:'8px 0 20px'
-      }}>
-        {[
-          {id:'learn',label:'Learn'},
-          {id:'coach',label:'Coach'},
-          {id:'profile',label:'Profile'}
-        ].map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)} style={{
-            flex:1,background:'none',border:'none',cursor:'pointer',
-            padding:'8px 0',fontFamily:'var(--body)',fontSize:'12px',
-            color: tab === t.id ? 'var(--gold)' : 'var(--muted)',
-            fontWeight: tab === t.id ? '500' : '400'
-          }}>{t.label}</button>
+      <nav style={{display:'flex',borderTop:'0.5px solid #22222E',background:'#12121A',padding:'8px 0 20px',position:'sticky',bottom:0}}>
+        {[{id:'learn',label:'Learn'},{id:'coach',label:'Coach'},{id:'profile',label:'Profile'}].map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)} style={{flex:1,background:'none',border:'none',cursor:'pointer',padding:'8px 0',fontFamily:'Inter,sans-serif',fontSize:'12px',color:tab===t.id?'#C9963A':'#888780',fontWeight:tab===t.id?'500':'400'}}>
+            {t.label}
+          </button>
         ))}
       </nav>
     </div>
