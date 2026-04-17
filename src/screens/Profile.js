@@ -10,7 +10,7 @@ export default function Profile({user}) {
   const avgTime=attempts.length?Math.round(attempts.reduce((a,b)=>a+(b.time||0),0)/attempts.length):0;
   const days=user?.daysToCAT||0;
   const persona=user?.persona;
-  const S={padding:'1.5rem 1.25rem',minHeight:'100vh',background:'var(--bg)'};
+  const S={padding:'1.5rem 1.25rem',minHeight:'100vh',background:'var(--bg)'}
 
   return(
     <div style={S}>
